@@ -3,6 +3,11 @@ from pydantic import BaseModel
 import mysql.connector
 from fastapi.middleware.cors import CORSMiddleware
 import psycopg2
+import hashlib
+from datetime import datetime
+
+from routes.user import loginRouter
+from routes.data import dataRouter
 
 app = FastAPI()
 
@@ -15,16 +20,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# conn = mysql.connector.connect(user='root', password='root', host='localhost', database='sakila', auth_plugin='mysql_native_password')
-# cursor = conn.cursor()
 
 con = psycopg2.connect('dbname=postgres user=postgres host=database-postgres.cnmbtvnxnbpx.us-east-1.rds.amazonaws.com password=12345678')
 cur = con.cursor()
 
 @app.get('/')
 async def root():
+    # return {
+    #     "status": True
+    # }
     cur.execute("SELECT * FROM almacenes_de_datos.users")
-    user = cur.fetchall()
+
+    head = [i[0] for i in cur.description]
+    
+    user = []
+    for row in cur.fetchall():
+        user.append(dict(zip(head, row)))
+
     return user
     # return {'data': [
     #     ["Year", "Sales", "Expenses", "Profit"],
@@ -34,13 +46,5 @@ async def root():
     #     ["2017", 1030, 540, 350],
     # ]}
 
-class Login(BaseModel):
-    username: str
-    password: str
-
-@app.post('/login')
-async def login(login: Login):
-    if login.username == "user1" and login.password == "1234":
-        return {"status": True, "token": "12345678"}
-    else:
-        return {"status": False}
+app.include_router(loginRouter)
+app.include_router(dataRouter)
