@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import hashlib
 from datetime import datetime
 from helpers.functions import createQuery, createQueryOne
+from fastapi.responses import JSONResponse
 
 loginRouter = APIRouter(prefix="/user")
 
@@ -12,15 +13,18 @@ class Login(BaseModel):
 
 @loginRouter.post("/login")
 async def login(login: Login):
-    passhash = hashlib.md5(login.password.encode('utf-8')).hexdigest()
+    try:
+        passhash = hashlib.md5(login.password.encode('utf-8')).hexdigest()
 
-    user = createQueryOne("Select user_id, username, type From Users Where username=%s And password=%s", [login.username, passhash])
+        user = createQueryOne("Select user_id, username, type From Users Where username=%s And password=%s", [login.username, passhash])
 
-    if user == False:
-        return {"status": False}
+        if user == False:
+            return {"status": False}
 
-    token = hashlib.md5((login.password + login.username + datetime.now().strftime("%H:%M:%S")).encode('utf-8')).hexdigest()
-    createQuery("Update Sessions Set end = %s Where user_id = %s And end Is NULL", [ datetime.now().strftime("%Y-%m-%d %H:%M:%S"), user["user_id"] ])
-    createQuery("Insert Into Sessions(user_id, token) Values(%s,%s)",[user["user_id"], token])
-    
-    return { "status": True, "user": user, 'token': token}
+        token = hashlib.md5((login.password + login.username + datetime.now().strftime("%H:%M:%S")).encode('utf-8')).hexdigest()
+        createQuery("Update Sessions Set end = %s Where user_id = %s And end Is NULL", [ datetime.now().strftime("%Y-%m-%d %H:%M:%S"), user["user_id"] ])
+        createQuery("Insert Into Sessions(user_id, token) Values(%s,%s)",[user["user_id"], token])
+        
+        return { "status": True, "user": user, 'token': token}
+    except:
+        return JSONResponse(content={"message": "Ha habido un error en el servidor"}, status_code=500)
