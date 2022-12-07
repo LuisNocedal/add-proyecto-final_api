@@ -39,3 +39,7 @@ async def test(request: Request):
         return { "status": True, "instancesData": instancesData }
     except:
         return JSONResponse(content={"message": "Ha habido un error en el servidor"}, status_code=500)
+
+@dataRouter.post("/clear-data")
+async def test(request: Request):
+    return { "status:": True }

@@ -57,7 +57,7 @@ def getAllTablesFromMysql(host, username, password, database):
 
     totalInfo = []
     for table in tables:
-        cursorMysql.execute("Select * From " + table["TABLE_NAME"] + " Limit 100")
+        cursorMysql.execute("Select * From `" + table["TABLE_NAME"] + "` Limit 100")
         headInfo = [i[0] for i in cursorMysql.description]
 
         info = []
